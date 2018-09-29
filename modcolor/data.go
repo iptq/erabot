@@ -1,6 +1,6 @@
 package modcolor
 
-var colors = map[string]int{
+var colorMap = map[string]int{
 	"aliceblue":            15792383,
 	"antiquewhite":         16444375,
 	"aqua":                 65535,
