@@ -13,7 +13,7 @@ type ColorCommand struct {
 }
 
 var command = ColorCommand{
-	Description: "change your [current color](https://www.w3schools.com/colors/colors_names.asp) (ex: `!color DodgerBlue`)",
+	Description: "change your [color](https://www.w3schools.com/colors/colors_names.asp) (ex: `!color DodgerBlue` or `!color none`)",
 }
 
 func successReact(s *discordgo.Session, m *discordgo.Message) {
@@ -26,8 +26,9 @@ func (c ColorCommand) Handle(argv []string, s *discordgo.Session, m *discordgo.M
 	}
 
 	colorName := strings.ToLower(argv[1])
+
 	value, ok := colorMap[colorName]
-	if !ok {
+	if colorName != "none" && !ok {
 		return errors.New("that color doesn't exist. See: https://www.w3schools.com/colors/colors_names.asp")
 	}
 
@@ -53,23 +54,6 @@ func (c ColorCommand) Handle(argv []string, s *discordgo.Session, m *discordgo.M
 		}
 	}
 
-	if !colorRoleFound {
-		// create the role
-		newRole, err := s.GuildRoleCreate(channel.GuildID)
-		if err != nil {
-			return err
-		}
-		role, err := s.GuildRoleEdit(channel.GuildID, newRole.ID, "Color: "+colorName, value, false, 0, false)
-		colorRole = role
-		if err != nil {
-			return err
-		}
-		_, err = s.GuildRoleReorder(channel.GuildID, append([]*discordgo.Role{role}, roles...))
-		if err != nil {
-			return err
-		}
-	}
-
 	member, err := s.GuildMember(channel.GuildID, m.Author.ID)
 	if err != nil {
 		return err
@@ -87,10 +71,29 @@ func (c ColorCommand) Handle(argv []string, s *discordgo.Session, m *discordgo.M
 		}
 	}
 
-	// add current role
-	err = s.GuildMemberRoleAdd(channel.GuildID, m.Author.ID, colorRole.ID)
-	if err != nil {
-		return err
+	if colorName != "none" {
+		if !colorRoleFound {
+			// create the role
+			newRole, err := s.GuildRoleCreate(channel.GuildID)
+			if err != nil {
+				return err
+			}
+			role, err := s.GuildRoleEdit(channel.GuildID, newRole.ID, "Color: "+colorName, value, false, 0, false)
+			colorRole = role
+			if err != nil {
+				return err
+			}
+			_, err = s.GuildRoleReorder(channel.GuildID, append([]*discordgo.Role{role}, roles...))
+			if err != nil {
+				return err
+			}
+		}
+
+		// add current role
+		err = s.GuildMemberRoleAdd(channel.GuildID, m.Author.ID, colorRole.ID)
+		if err != nil {
+			return err
+		}
 	}
 
 	successReact(s, m)
